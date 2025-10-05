@@ -3,388 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heinpop AI - Your AI Assistant</title>
+    <link rel="icon" name="icon-x/image" href="logo.svg">
+    <title>HeinPop-AI</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Library to render Markdown in HTML -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* Custom scrollbar for a clean dark theme look */
+        #chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-window::-webkit-scrollbar-track {
+            background: #1f2937; /* Gray-800 */
+        }
+
+        #chat-window::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* Gray-600 */
+            border-radius: 20px;
+            border: 2px solid #111827; /* Gray-900 */
+        }
+
+        /* Set Inter font */
         body {
             font-family: 'Inter', sans-serif;
         }
-        .hero-bg {
-            background-color: #f9fafb;
+
+        /* Simple animation for new message */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
-        .nav-link {
-            transition: color 0.3s;
-        }
-        .nav-link:hover {
-            color: #3b82f6;
-        }
-        /* Chat bubble styles */
-        .chat-bubble {
-            max-width: 85%;
-            padding: 12px 18px;
-            border-radius: 20px;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
-        .user-bubble {
-            background-color: #3b82f6;
-            color: white;
-            border-bottom-right-radius: 4px;
-            align-self: flex-end;
-        }
-        .ai-bubble {
-            background-color: #e5e7eb;
-            color: #1f2937;
-            border-bottom-left-radius: 4px;
-            align-self: flex-start;
-        }
-        .ai-bubble p, .ai-bubble ul, .ai-bubble ol, .ai-bubble pre {
-            margin-top: 8px;
-            margin-bottom: 8px;
-        }
-        .ai-bubble ul, .ai-bubble ol {
-            padding-left: 20px;
-        }
-        .ai-bubble pre {
-            background-color: #1f2937;
-            color: #f3f4f6;
-            padding: 12px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        /* Typing indicator animation */
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            background-color: #9ca3af;
-            border-radius: 50%;
-            display: inline-block;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
-        /* Scrollbar styling */
-        #chat-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        #chat-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        #chat-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        #chat-container::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .example-prompt {
-            transition: background-color 0.3s;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 shadow-sm">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="text-2xl font-bold text-gray-900">
-                    <a href="#" class="flex items-center">
-                        <i class="fas fa-brain text-blue-500 mr-2"></i>
-                        Heinpop AI
-                    </a>
+    <!-- Main Chat Container -->
+    <div class="w-full max-w-4xl h-[90vh] flex flex-col bg-gray-800 rounded-xl shadow-2xl">
+
+        <!-- Header -->
+        <header class="p-4 bg-gray-700 rounded-t-xl shadow-md flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-indigo-400 flex items-center">
+                <img src="logo.svg" alt="logo" width="50px" style="margin-right: 1rem; ">
+                <span style="color: #c31ec9;">HeinPop AI Chat</span>
+            </h1>
+            <img src="" alt="">
+            <button id="new-chat-btn" style="background-color: white; display: flex; padding: 5px 15px; align-items: center; border-radius: 1rem; border: 1px solid #c31ec9; color: #c31ec9; font-weight: bold;" onclick="startNewChat()" >
+                <i data-lucide="plus-circle" class="w-4 h-4 mr-1"></i>
+                Clear Chat
+            </button>
+        </header>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="flex-1 overflow-y-auto p-4 space-y-4" style="background-color: black;">
+            <!-- Initial welcome message -->
+            <div class="flex justify-start" >
+                <div class="bg-gray-700 p-3 rounded-xl rounded-tl-none max-w-[85%] sm:max-w-[70%] shadow-lg fade-in">
+                    <p class="font-semibold text-indigo-300">HeinPop</p>
+                    <p class="mt-1">မင်္ဂလာပါ 😀 ဘာများသိချင်တာရှိလို့လဲဗျ။ </p>
                 </div>
-                <nav class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="nav-link text-gray-600 font-medium">Assistant</a>
-                    <a href="#about" class="nav-link text-gray-600 font-medium">About</a>
-                </nav>
-                 <a href="#home" class="hidden md:inline-block bg-blue-500 text-white font-semibold px-5 py-2 rounded-lg hover:bg-blue-600 transition-colors">Try Now</a>
-                <button id="mobile-menu-button" class="md:hidden text-gray-800">
-                    <i class="fas fa-bars text-2xl"></i>
+            </div>
+        </div>
+
+        <!-- Message Input Area -->
+        <footer class="p-4 bg-gray-700 rounded-b-xl border-t border-gray-600">
+            <div class="flex space-x-3">
+                <input
+                    type="text"
+                    id="user-input"
+                    class="flex-1 p-3 bg-gray-900 border border-gray-600 text-gray-100 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    placeholder="Type your message here..."
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                    autocomplete="off"
+                >
+                <button
+                    id="send-button"
+                    class="bg-white text-[#c31ec9ff] p-3 rounded-xl hover:bg-[#141414] transition duration-200 disabled:bg-indigo-800 disabled:opacity-50 shadow-lg flex items-center justify-center"
+                    onclick="sendMessage()"
+                >
+                    <i data-lucide="send" class="w-5 h-5"></i>
                 </button>
             </div>
-        </div>
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white">
-            <a href="#home" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">Assistant</a>
-            <a href="#about" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">About</a>
-            <a href="#home" class="block py-4 px-6 bg-blue-500 text-white text-center font-semibold rounded-b-lg hover:bg-blue-600 transition-colors">Try Now</a>
-        </div>
-    </header>
+            <div id="error-message" class="mt-2 text-red-400 text-sm hidden"></div>
+        </footer>
 
-    <main>
-        <!-- AI Assistant Section -->
-        <section id="home" class="hero-bg pt-24 md:pt-32 pb-12">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl flex flex-col h-[85vh] md:h-[80vh]">
-                    <!-- Chat Header -->
-                    <div class="p-4 border-b rounded-t-2xl flex justify-between items-center">
-                        <div class="text-left">
-                            <h1 class="text-xl font-semibold text-gray-800">AI Assistant</h1>
-                            <p class="text-sm text-gray-500">I'm here to help you with anything!</p>
-                        </div>
-                        <button id="clear-chat-button" title="Clear Chat" class="text-gray-500 hover:text-blue-500 transition-colors">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-
-                    <!-- Chat Messages -->
-                    <div id="chat-container" class="flex-1 p-6 space-y-4 overflow-y-auto">
-                        <!-- Initial Welcome Message -->
-                        <div id="initial-message-container">
-                             <div class="flex">
-                                <div class="ai-bubble chat-bubble">
-                                    Hello! I'm Heinpop, your advanced AI assistant. I can help you write content, brainstorm ideas, debug code, and much more. What's on your mind?
-                                </div>
-                            </div>
-                            <!-- Example Prompts -->
-                            <div id="example-prompts" class="mt-6">
-                                <p class="text-sm text-gray-500 mb-2 text-center">Or try one of these examples:</p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <button class="example-prompt text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200">"Explain quantum computing in simple terms"</button>
-                                    <button class="example-prompt text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200">"Write a Python script to scrape a website"</button>
-                                    <button class="example-prompt text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200">"Draft a professional email to a client"</button>
-                                    <button class="example-prompt text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200">"Give me 5 ideas for a new fantasy novel"</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Typing Indicator -->
-                    <div id="typing-indicator" class="p-6 hidden">
-                        <div class="flex items-center space-x-2">
-                            <div class="ai-bubble chat-bubble py-3">
-                                <div class="typing-indicator">
-                                    <span></span><span></span><span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Chat Input -->
-                    <div class="p-4 border-t bg-gray-50 rounded-b-2xl">
-                        <form id="chat-form" class="flex items-center space-x-3">
-                            <input type="text" id="chat-input" placeholder="Ask me anything..." autocomplete="off"
-                                class="flex-1 w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                            <button type="submit" id="send-button"
-                                class="bg-blue-500 text-white font-semibold px-5 py-3 rounded-xl hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Section -->
-        <section id="about" class="bg-white py-20">
-            <div class="container mx-auto px-6">
-                <div class="flex flex-col md:flex-row items-center">
-                    <div class="md:w-1/2 mb-8 md:mb-0">
-                        <img src="https://placehold.co/600x400/3b82f6/ffffff?text=Heinpop+AI" alt="About Heinpop AI" class="rounded-lg shadow-xl w-full">
-                    </div>
-                    <div class="md:w-1/2 md:pl-12">
-                        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">About Heinpop AI</h2>
-                        <p class="text-gray-600 text-lg mb-4">Heinpop AI started with a simple mission: to make artificial intelligence accessible and useful for everyone. We believe that AI should be a tool that empowers human creativity and problem-solving, not replace it.</p>
-                        <p class="text-gray-600 text-lg">Our team of dedicated engineers and researchers are passionate about pushing the boundaries of what's possible, ensuring our platform is not only powerful but also ethical and reliable.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-6 md:mb-0">
-                    <h4 class="text-xl font-bold">Heinpop AI</h4>
-                    <p class="text-gray-400">Your Intelligent Partner</p>
-                </div>
-                <div class="flex space-x-6 mb-6 md:mb-0">
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter text-2xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-github text-2xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin text-2xl"></i></a>
-                </div>
-                <div class="text-gray-400 text-sm">
-                    &copy; <span id="year"></span> Heinpop AI. All Rights Reserved.
-                </div>
-            </div>
-        </div>
-    </footer>
+    </div>
 
     <script>
-        // --- DOM Element References ---
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const chatContainer = document.getElementById('chat-container');
-        const typingIndicator = document.getElementById('typing-indicator');
-        const clearChatButton = document.getElementById('clear-chat-button');
-        const examplePromptsContainer = document.getElementById('example-prompts');
-        const initialMessageContainer = document.getElementById('initial-message-container');
-        const markdownConverter = new showdown.Converter({ tables: true, strikethrough: true, tasklists: true });
-
-        // --- Global State ---
-        const SYSTEM_PROMPT = {
-            role: "user",
-            parts: [{ text: "You are Heinpop, a friendly, brilliant, and helpful AI assistant. You are an expert in a wide range of topics. Your responses should be informative, well-structured, and easy to understand. Use markdown for formatting, including code blocks, lists, and tables when appropriate. Be creative and engaging." }]
-        };
-        let chatHistory = [SYSTEM_PROMPT];
-
-        // --- UI Functions ---
-        const setupInitialChat = () => {
-            chatContainer.innerHTML = ''; // Clear previous messages
-            chatContainer.appendChild(initialMessageContainer);
-            initialMessageContainer.style.display = 'block';
-            chatHistory = [SYSTEM_PROMPT]; // Reset history
-        };
-
-        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        // Global Constants
+        const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
+        const apiKey = "AIzaSyBtoewxjHV2hGp_wuC3A8gHh7I5EKxn3mY"; // API key is provided by the environment
         
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                if(targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
-                if (!mobileMenu.classList.contains('hidden')) mobileMenu.classList.add('hidden');
-            });
-        });
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const errorMessageDiv = document.getElementById('error-message');
+        const MAX_RETRIES = 5;
 
-        document.getElementById('year').textContent = new Date().getFullYear();
+        // Initialize Lucide icons
+        window.onload = () => {
+            lucide.createIcons();
+            // Scroll to bottom on load
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
 
-        const scrollToBottom = () => chatContainer.scrollTop = chatContainer.scrollHeight;
+        /**
+         * Simple utility to safely generate a random UUID.
+         * Falls back to a simple timestamp + random number if crypto.randomUUID is unavailable.
+         */
+        const generateId = () => window.crypto.randomUUID ? window.crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).substring(2));
 
-        const appendMessage = (sender, message, isHtml = false) => {
-            const messageWrapper = document.createElement('div');
-            messageWrapper.classList.add('flex', 'flex-col'); // Use flex-col to stack elements
+        /**
+         * Adds a message to the chat window.
+         * @param {string} role - 'user' or 'ai'
+         * @param {string} text - The content of the message
+         * @returns {HTMLElement} The created message element.
+         */
+        function addMessage(role, text) {
+            const justifyClass = role === 'user' ? 'justify-end' : 'justify-start';
+            const bgColor = role === 'user' ? 'bg-indigo-600' : 'bg-gray-700';
+            const nameColor = role === 'user' ? 'text-indigo-200' : 'text-indigo-300';
+            const name = role === 'user' ? 'You' : 'HeinPop AI';
 
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('chat-bubble', sender === 'user' ? 'user-bubble' : 'ai-bubble');
-            
-            if (isHtml) {
-                messageElement.innerHTML = message;
-            } else {
-                messageElement.textContent = message;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${justifyClass}`;
+            messageDiv.innerHTML = `
+                <div class="${bgColor} p-3 rounded-xl ${role === 'user' ? 'rounded-br-none' : 'rounded-tl-none'} max-w-[85%] sm:max-w-[70%] shadow-xl fade-in">
+                    <p class="font-semibold ${nameColor}">${name}</p>
+                    <div class="mt-1 message-content">${text}</div>
+                </div>
+            `;
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return messageDiv.querySelector('.message-content');
+        }
+
+        /**
+         * Adds a temporary loading spinner while waiting for the AI response.
+         * @returns {HTMLElement} The loading element wrapper.
+         */
+        function addLoadingIndicator() {
+            const loadingWrapper = document.createElement('div');
+            loadingWrapper.id = 'loading-indicator';
+            loadingWrapper.className = 'flex justify-start';
+            loadingWrapper.innerHTML = `
+                <div class="bg-gray-700 p-3 rounded-xl rounded-tl-none shadow-lg w-20 flex justify-center items-center">
+                    <svg class="animate-spin h-5 w-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            `;
+            chatWindow.appendChild(loadingWrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return loadingWrapper;
+        }
+
+        /**
+         * Fetches data with exponential backoff retry logic.
+         * @param {string} url - The API URL.
+         * @param {object} options - Fetch options (method, headers, body).
+         * @returns {Promise<Response>} The fetch response object.
+         */
+        async function exponentialBackoffFetch(url, options) {
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429 && i < MAX_RETRIES - 1) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === MAX_RETRIES - 1) throw error;
+                    // Wait for retry
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
             }
-            
-            // Append message to wrapper and then to container
-            messageWrapper.appendChild(messageElement);
-            chatContainer.appendChild(messageWrapper);
-            scrollToBottom();
-        };
+        }
 
-        const showTypingIndicator = (show) => {
-            typingIndicator.classList.toggle('hidden', !show);
-            if (show) scrollToBottom();
-        };
+        /**
+         * Clears the chat window and displays the welcome message.
+         */
+        function startNewChat() {
+            if (confirm("Are you sure you want to start a new chat? Your current conversation history will be cleared.")) {
+                chatWindow.innerHTML = `
+                    <div class="flex justify-start">
+                        <div class="bg-gray-700 p-3 rounded-xl rounded-tl-none max-w-[85%] sm:max-w-[70%] shadow-lg fade-in">
+                            <p class="font-semibold text-indigo-300">HeinPop AI</p>
+                            <p class="mt-1">မင်္ဂလာပါ 😀 ဘာများသိချင်တာရှိလို့လဲဗျ။ </p>
+                        </div>
+                    </div>
+                `;
+                userInput.value = '';
+                errorMessageDiv.classList.add('hidden');
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }
 
-        // --- API Integration ---
-        const getAIResponse = async (prompt) => {
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        /**
+         * Gathers the current chat history from the DOM to send to the API.
+         * Note: This is a simplistic approach for a single-file demo.
+         */
+        function getChatHistory() {
+            const history = [];
+            const messages = chatWindow.querySelectorAll('.flex');
 
-            const apiKey = ""; // Handled by the environment
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: chatHistory,
-                generationConfig: {
-                    temperature: 0.7,
-                    topP: 0.95,
-                    topK: 40,
-                    maxOutputTokens: 2048,
-                },
-            };
+            messages.forEach(msgDiv => {
+                const isUser = msgDiv.querySelector('.text-indigo-200');
+                const role = isUser ? 'user' : 'model';
+                const contentDiv = msgDiv.querySelector('.message-content');
+
+                if (contentDiv) {
+                    // Use innerText to strip HTML (like the loading spinner before it's removed)
+                    let text = contentDiv.innerText.trim();
+
+                    // Skip the initial welcome message from the history context, it's irrelevant.
+                    if (messages.length > 1 && role === 'model' && text.startsWith("Hello! I'm HeinPop AI")) {
+                        return; 
+                    }
+                    
+                    history.push({
+                        role: role,
+                        parts: [{ text: text }]
+                    });
+                }
+            });
+
+            // The last item in history is the current user message, which is already formatted correctly.
+            return history;
+        }
+
+        /**
+         * Sends the user's message to the Gemini API and handles the response.
+         */
+        async function sendMessage() {
+            const prompt = userInput.value.trim();
+            if (!prompt) return;
+
+            // 1. Display user message
+            addMessage('user', prompt);
+            userInput.value = ''; // Clear input
+            sendButton.disabled = true;
+            errorMessageDiv.classList.add('hidden');
+
+            // 2. Add loading indicator
+            const loadingIndicator = addLoadingIndicator();
 
             try {
-                const response = await fetch(apiUrl, {
+                // 3. Construct payload
+                const chatHistory = getChatHistory();
+                const systemPrompt = "You are HeinPop AI, a helpful, ethical, and creative assistant. Format your responses using markdown for clarity (e.g., use bold, lists, and code blocks). Your goal is to provide accurate and detailed information.";
+
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }], // Only send the latest prompt for non-streaming
+                    // In a real multi-turn chat, we would send the full history: contents: chatHistory
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                // 4. API Call
+                const response = await exponentialBackoffFetch(`${API_URL}?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.statusText}`);
-                }
-
-                const result = await response.json();
                 
-                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
-                    const aiText = result.candidates[0].content.parts[0].text;
-                    chatHistory.push({ role: "model", parts: [{ text: aiText }] });
-                    return aiText;
+                const result = await response.json();
+
+                // 5. Process response
+                const candidate = result.candidates?.[0];
+                let aiResponseText = "Sorry, I encountered an issue generating a response.";
+                
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    aiResponseText = candidate.content.parts[0].text;
+                } else if (result.error) {
+                    aiResponseText = `Error: ${result.error.message}`;
+                    console.error("API Error:", result.error);
                 } else {
-                     // Handle cases where response is blocked or empty
-                    const blockReason = result.candidates?.[0]?.finishReason;
-                    const safetyMessage = "I'm unable to respond to that request. Is there something else I can help with?";
-                    chatHistory.push({ role: "model", parts: [{ text: safetyMessage }] });
-                    return safetyMessage;
+                    console.error("Unexpected API response structure:", result);
                 }
+                
+                // 6. Remove loading indicator and display AI response
+                loadingIndicator.remove();
+                const aiContentDiv = addMessage('ai', `<p>${aiResponseText.replace(/\n/g, '<br>')}</p>`);
+
+                // Simple markdown-like formatting (to handle code blocks/lists, we'd need a real markdown library)
+                // For this demo, we'll just use a <pre> tag for simple code blocks if detected.
+                if (aiResponseText.includes('```')) {
+                    aiContentDiv.innerHTML = formatCodeBlocks(aiResponseText);
+                }
+
+
             } catch (error) {
-                console.error("Fetch error:", error);
-                chatHistory.pop(); // Remove the failed user message
-                return "I'm sorry, I'm having trouble connecting right now. Please try again later.";
+                console.error("Fetch or processing failed:", error);
+                loadingIndicator.remove();
+                errorMessageDiv.textContent = `Failed to connect to AI: ${error.message}`;
+                errorMessageDiv.classList.remove('hidden');
+                addMessage('ai', 'An error occurred while fetching the response. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+                userInput.focus();
             }
-        };
+        }
 
-        // --- Event Handler ---
-        const handleUserPrompt = async (prompt) => {
-            if (!prompt) return;
+        /**
+         * Simple function to replace triple backticks with HTML pre/code tags
+         * as a basic form of markdown rendering for code blocks.
+         */
+        function formatCodeBlocks(text) {
+            let formattedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const parts = formattedText.split('```');
+            let result = '';
 
-            if (initialMessageContainer.style.display !== 'none') {
-                initialMessageContainer.style.display = 'none';
-                chatContainer.innerHTML = ''; // Clear initial message and examples
+            for (let i = 0; i < parts.length; i++) {
+                if (i % 2 === 1) { // Inside a code block
+                    let [lang, ...codeLines] = parts[i].split('\n');
+                    let code = codeLines.join('\n');
+                    
+                    if (!code) {
+                        code = lang;
+                        lang = '';
+                    }
+
+                    // Simple syntax highlight hint using language name
+                    result += `<pre class="mt-2 p-2 bg-gray-900 rounded-lg text-sm overflow-x-auto"><code class="language-${lang.trim() || 'plaintext'}">${code.trim()}</code></pre>`;
+                } else { // Outside a code block
+                    result += parts[i].replace(/\n/g, '<br>');
+                }
             }
-
-            chatInput.value = '';
-            chatInput.disabled = true;
-            sendButton.disabled = true;
-            appendMessage('user', prompt);
-
-            showTypingIndicator(true);
-            const aiResponseText = await getAIResponse(prompt);
-            showTypingIndicator(false);
-            
-            const aiResponseHtml = markdownConverter.makeHtml(aiResponseText);
-            appendMessage('ai', aiResponseHtml, true);
-
-            chatInput.disabled = false;
-            sendButton.disabled = false;
-            chatInput.focus();
-        };
-
-        // --- Event Listeners ---
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleUserPrompt(chatInput.value.trim());
-        });
-
-        clearChatButton.addEventListener('click', () => {
-            setupInitialChat();
-        });
-
-        examplePromptsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('example-prompt')) {
-                const prompt = e.target.textContent.replace(/"/g, '');
-                handleUserPrompt(prompt);
-            }
-        });
-
-        // --- Initial Setup ---
-        window.onload = setupInitialChat;
+            return result;
+        }
 
     </script>
+    <noscript>
+        <div class="absolute inset-0 bg-red-900 bg-opacity-90 flex items-center justify-center text-white text-xl">
+            Please enable JavaScript to use the HeinPop AI Chat application.
+        </div>
+    </noscript>
 </body>
 </html>
